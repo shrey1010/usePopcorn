@@ -8,10 +8,10 @@ StarRating.propTypes = {
   size: PropTypes.number,
   className: PropTypes.string,
   messages: PropTypes.array,
-  onSetRating : PropTypes.func
+  // onSetRating : PropTypes.func
 }
 
-export default function StarRating({maxRating = 10,color = '#fcc419' , size=48, className="" , messages=[] , onSetRating }){
+export default function StarRating({maxRating = 10,color = '#fcc419' , size=48, className="" , messages=[] }){
 
     const containerStyle ={display:"flex",alignItems:"center",gap:"16px"}
     const starContainerStyle ={display:"flex",gap:"4px"}
@@ -22,7 +22,7 @@ export default function StarRating({maxRating = 10,color = '#fcc419' , size=48, 
 
     function handleRating(i){
       setRating(i + 1);
-      onSetRating(i+1);
+      // onSetRating(i+1);
     }
 
     return (
