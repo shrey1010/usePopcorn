@@ -57,15 +57,17 @@ export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);  
   const [isLoading,setIsLoading] = useState(false);
+  const [query, setQuery] = useState("");
   const [error , setError] = useState("");
-
-  const query = "interstellar";
 
   useEffect(function(){
     async function fetchMovie(){
     try{
       setIsLoading(true);
-      const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`)
+      setError("");
+      const res = await fetch(
+        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+      );
       if(!res.ok)throw new Error("Something went wrong with fetching movies");
       const data = await res.json();
       if(data.Response ===false) throw new Error("Movie not found!");
@@ -78,20 +80,25 @@ export default function App() {
       setIsLoading(false);
     }
     }
+    if(query.length<3){
+      setMovies([])
+      setError("");
+      return;
+    }
     fetchMovie();
-  },[]);
+  },[query]);
 
   return (
     <>
       <NavBar>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
       <Main>
         <Box>
           {isLoading && <Loader />}
-          { !isLoading && !error && <MovieList movies={movies} />}
+          {!isLoading && !error && <MovieList movies={movies} />}
           {error && <ErrorMessage message={error} />}
         </Box>
         <Box>
@@ -126,13 +133,18 @@ function NavBar({children}){
   );
 }
 
-function NumResults({movies}){
+function NumResults({ movies }) {
   return (
     <p className="num-results">
-      Found <strong>{movies.length}</strong> results
+      {movies && (
+        <>
+          Found <strong>{movies.length}</strong> results
+        </>
+      )}
     </p>
   );
 }
+
 
 function Logo(){
   return (
@@ -143,8 +155,7 @@ function Logo(){
   );
 }
 
-function Search(){
-  const [query, setQuery] = useState("");
+function Search({query,setQuery}){
   return (
     <input
       className="search"
