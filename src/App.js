@@ -58,7 +58,7 @@ export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);  
   const [isLoading,setIsLoading] = useState(false);
-  const [query, setQuery] = useState("Inception");
+  const [query, setQuery] = useState("");
   const [error , setError] = useState("");
   const [selectedId,setSelectedId] = useState(null);
 
@@ -107,6 +107,7 @@ export default function App() {
       setError("");
       return;
     }
+    handleCloseMovie();
     fetchMovie();
     return function(){
       controller.abort();
@@ -175,14 +176,20 @@ function MovieDetails({ selectedId, handleCloseMovie ,handleAddWatched, watched}
     handleAddWatched(newWatchedMovie)
     handleCloseMovie()
   }
-  useEffect(function () {
-    document.addEventListener("keydown", function (e) {
+  useEffect(() => {
+    function callback(e) {
       if (e.code === "Escape") {
         handleCloseMovie();
       }
-    });
-  }, [handleCloseMovie]
-);
+    }
+
+    document.addEventListener("keydown", callback);
+
+    return () => {
+      document.removeEventListener("keydown", callback);
+    };
+  }, [handleCloseMovie]);
+
   useEffect(function(){
     async function getMovieDetails(){
       setIsLoading(true)
