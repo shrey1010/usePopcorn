@@ -79,20 +79,24 @@ export default function App() {
   }
 
   useEffect(function(){
+    const controller = new AbortController();
+
     async function fetchMovie(){
     try{
       setIsLoading(true);
       setError("");
       const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,{signal:controller.signal}
       );
       if(!res.ok)throw new Error("Something went wrong with fetching movies");
       const data = await res.json();
       if(data.Response ===false) throw new Error("Movie not found!");
       setMovies(data.Search);
+      setError("")
     }
     catch(err){
-      setError(err.message);
+      if(err.name!=="AbortError")
+      {setError(err.message);}
     }
     finally{
       setIsLoading(false);
@@ -104,6 +108,9 @@ export default function App() {
       return;
     }
     fetchMovie();
+    return function(){
+      controller.abort();
+    }
   },[query]);
 
   return (
@@ -168,7 +175,14 @@ function MovieDetails({ selectedId, handleCloseMovie ,handleAddWatched, watched}
     handleAddWatched(newWatchedMovie)
     handleCloseMovie()
   }
-
+  useEffect(function () {
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Escape") {
+        handleCloseMovie();
+      }
+    });
+  }, [handleCloseMovie]
+);
   useEffect(function(){
     async function getMovieDetails(){
       setIsLoading(true)
