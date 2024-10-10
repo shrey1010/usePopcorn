@@ -56,11 +56,15 @@ const average = (arr) =>
 
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
-  const [watched, setWatched] = useState(tempWatchedData);  
   const [isLoading,setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [error , setError] = useState("");
   const [selectedId,setSelectedId] = useState(null);
+  // const [watched, setWatched] = useState(tempWatchedData);  
+  const [watched, setWatched] = useState(function(){
+    const storedValue = localStorage.getItem('watched');
+    return JSON.parse(storedValue);
+  });  
 
 
   function handleSelectMovie(id){
@@ -77,6 +81,11 @@ export default function App() {
   function handleDeleteWatched(id){
     setWatched(watched=>watched.filter(movie=>movie.imdbID!==id));
   }
+
+  useEffect(function (){
+    localStorage.setItem("watched",JSON.stringify(watched));
+  }
+  ,[watched]);
 
   useEffect(function(){
     const controller = new AbortController();
