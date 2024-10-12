@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { useState } from "react";
 import StarRating from "./StarRating";
 import { useMovies } from "./useMovies";
+import { useLocalStorageState } from "./useLocalStorageState";
+import { useKey } from "./useKey";
 
 const tempMovieData = [
   {
@@ -58,13 +60,9 @@ const average = (arr) =>
 export default function App() {
   const [query, setQuery] = useState("");
   const [selectedId,setSelectedId] = useState(null);
-  // const [watched, setWatched] = useState(tempWatchedData);  
-  const [watched, setWatched] = useState(function(){
-    const storedValue = localStorage.getItem('watched');
-    return JSON.parse(storedValue);
-  });  
 
   const {movies,isLoading,error} = useMovies(query,tempMovieData,handleCloseMovie)
+  const [watched, setWatched] = useLocalStorageState([])
 
 
   function handleSelectMovie(id){
@@ -81,11 +79,6 @@ export default function App() {
   function handleDeleteWatched(id){
     setWatched(watched=>watched.filter(movie=>movie.imdbID!==id));
   }
-
-  useEffect(function (){
-    localStorage.setItem("watched",JSON.stringify(watched));
-  }
-  ,[watched]);
 
   return (
     <>
@@ -149,19 +142,8 @@ function MovieDetails({ selectedId, handleCloseMovie ,handleAddWatched, watched}
     handleAddWatched(newWatchedMovie)
     handleCloseMovie()
   }
-  useEffect(() => {
-    function callback(e) {
-      if (e.code === "Escape") {
-        handleCloseMovie();
-      }
-    }
 
-    document.addEventListener("keydown", callback);
-
-    return () => {
-      document.removeEventListener("keydown", callback);
-    };
-  }, [handleCloseMovie]);
+  useKey(handleCloseMovie,"Escape")
 
   useEffect(function(){
     async function getMovieDetails(){
@@ -290,21 +272,11 @@ function Logo(){
 function Search({query,setQuery}){
 
   const inputEl = useRef(null);
-  useEffect(function(){
-    function callback(e){
-
-      if(document.activeElement===inputEl.current){return}
-      if (e.code === "Enter") {
-        inputEl.current.focus();
-        setQuery("");
-      }
-
-
-    }
-    document.addEventListener("keydown",callback)
-    return ()=> document.removeEventListener("keydown",callback);
-  }
-  ,[setQuery])
+  useKey(function(){
+    if(document.activeElement===inputEl.current){return}
+    inputEl.current.focus();
+    setQuery("");
+  }, "Enter");
 
   return (
     <input
