@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useState } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const tempMovieData = [
   {
@@ -55,16 +56,15 @@ const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 export default function App() {
-  const [movies, setMovies] = useState(tempMovieData);
-  const [isLoading,setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [error , setError] = useState("");
   const [selectedId,setSelectedId] = useState(null);
   // const [watched, setWatched] = useState(tempWatchedData);  
   const [watched, setWatched] = useState(function(){
     const storedValue = localStorage.getItem('watched');
     return JSON.parse(storedValue);
   });  
+
+  const {movies,isLoading,error} = useMovies(query,tempMovieData,handleCloseMovie)
 
 
   function handleSelectMovie(id){
@@ -86,42 +86,6 @@ export default function App() {
     localStorage.setItem("watched",JSON.stringify(watched));
   }
   ,[watched]);
-
-  useEffect(function(){
-    const controller = new AbortController();
-
-    async function fetchMovie(){
-    try{
-      setIsLoading(true);
-      setError("");
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,{signal:controller.signal}
-      );
-      if(!res.ok)throw new Error("Something went wrong with fetching movies");
-      const data = await res.json();
-      if(data.Response ===false) throw new Error("Movie not found!");
-      setMovies(data.Search);
-      setError("")
-    }
-    catch(err){
-      if(err.name!=="AbortError")
-      {setError(err.message);}
-    }
-    finally{
-      setIsLoading(false);
-    }
-    }
-    if(query.length<3){
-      setMovies([])
-      setError("");
-      return;
-    }
-    handleCloseMovie();
-    fetchMovie();
-    return function(){
-      controller.abort();
-    }
-  },[query]);
 
   return (
     <>
@@ -324,6 +288,24 @@ function Logo(){
 }
 
 function Search({query,setQuery}){
+
+  const inputEl = useRef(null);
+  useEffect(function(){
+    function callback(e){
+
+      if(document.activeElement===inputEl.current){return}
+      if (e.code === "Enter") {
+        inputEl.current.focus();
+        setQuery("");
+      }
+
+
+    }
+    document.addEventListener("keydown",callback)
+    return ()=> document.removeEventListener("keydown",callback);
+  }
+  ,[setQuery])
+
   return (
     <input
       className="search"
@@ -331,6 +313,7 @@ function Search({query,setQuery}){
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputEl}
     />
   );
 }
@@ -420,7 +403,7 @@ function WatchedSummary({watched}){
       </p>
       <p>
         <span>⏳</span>
-        <span>{avgRuntime} min</span>
+        <span>{avgRuntime.toFixed(2)} min</span>
       </p>
     </div>
   </div>
